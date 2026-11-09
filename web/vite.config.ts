@@ -1,0 +1,24 @@
+/// <reference types="vitest/config" />
+import { fileURLToPath, URL } from 'node:url'
+import tailwindcss from '@tailwindcss/vite'
+import vue from '@vitejs/plugin-vue'
+import { defineConfig } from 'vite'
+
+export default defineConfig({
+  plugins: [vue(), tailwindcss()],
+  resolve: {
+    alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
+  },
+  server: {
+    port: 5173,
+    // En desarrollo la API de Go corre en :8080; el proxy evita CORS.
+    proxy: {
+      '/api': 'http://localhost:8080',
+      '/healthz': 'http://localhost:8080',
+      '/readyz': 'http://localhost:8080',
+    },
+  },
+  test: {
+    environment: 'jsdom',
+  },
+})

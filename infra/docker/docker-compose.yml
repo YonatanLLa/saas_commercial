@@ -1,0 +1,48 @@
+name: saas
+
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: saas
+      POSTGRES_PASSWORD: saas
+      POSTGRES_DB: saas
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U saas -d saas"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: valkey/valkey:8
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Almacenamiento compatible con S3 para desarrollo (Apache 2.0).
+  storage:
+    image: chrislusf/seaweedfs
+    command: server -s3 -dir=/data
+    ports:
+      - "8333:8333"
+    volumes:
+      - storage-data:/data
+
+  mailpit:
+    image: axllent/mailpit
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # Interfaz web
+
+volumes:
+  postgres-data:
+  storage-data:

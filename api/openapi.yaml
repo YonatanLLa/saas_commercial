@@ -1,0 +1,120 @@
+openapi: 3.1.0
+info:
+  title: SaaS WhatsApp API
+  version: 0.1.0
+  description: |
+    Contrato único entre frontend y backend (spec-first).
+    Cualquier cambio en la API empieza en este archivo; luego se regenera
+    el código de Go (oapi-codegen) y los tipos de Vue (openapi-typescript).
+servers:
+  - url: http://localhost:8080
+    description: Local
+
+tags:
+  - name: system
+    description: Salud y disponibilidad del servicio
+
+paths:
+  /healthz:
+    get:
+      tags: [system]
+      operationId: getHealth
+      summary: El proceso está vivo
+      security: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /readyz:
+    get:
+      tags: [system]
+      operationId: getReadiness
+      summary: El servicio puede atender solicitudes (BD y Redis disponibles)
+      security: []
+      responses:
+        "200":
+          description: Listo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+        "503":
+          description: Alguna dependencia no está disponible
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    HealthStatus:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded]
+        checks:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            database: ok
+            redis: ok
+
+    # Formato estándar de error (BR-004). Todas las respuestas 4xx/5xx lo usan.
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              example: validation_error
+            message:
+              type: string
+              example: Los datos enviados no son válidos.
+            details:
+              type: array
+              items:
+                type: object
+                required: [field, message]
+                properties:
+                  field:
+                    type: string
+                  message:
+                    type: string
+            requestId:
+              type: string
+
+    # Metadatos estándar de paginación (BR-004).
+    PageMeta:
+      type: object
+      required: [page, pageSize, total]
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+        total:
+          type: integer
+          minimum: 0
+
+security:
+  - bearerAuth: []

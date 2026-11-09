@@ -1,0 +1,29 @@
+# Entorno
+.env
+.env.*
+!.env.example
+
+# Go
+backend/bin/
+backend/tmp/
+*.exe
+*.test
+*.out
+
+# Node / Vue
+node_modules/
+web/dist/
+*.local
+.vite/
+
+# Pruebas
+coverage/
+playwright-report/
+test-results/
+
+# Editores y sistema
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db

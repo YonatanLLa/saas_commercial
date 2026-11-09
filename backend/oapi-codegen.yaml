@@ -1,0 +1,8 @@
+# Genera tipos e interfaz de servidor chi desde el contrato.
+# Uso (en backend/): go tool oapi-codegen -config oapi-codegen.yaml ../api/openapi.yaml
+package: api
+output: internal/http/api/api.gen.go
+generate:
+  chi-server: true
+  models: true
+  strict-server: true
