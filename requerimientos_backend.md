@@ -134,6 +134,21 @@ otro tenant.
 **BR-015.** Mantener configuración, integraciones, límites y módulos
 habilitados por tenant.
 
+**BR-157.** Resolver las búsquedas que ocurren antes de conocer el
+tenant (inicio de sesión por correo, webhook por identificador del
+número, tokens de invitación, recuperación o refresh) mediante un
+mecanismo acotado que haga una sola búsqueda exacta y devuelva solo los
+datos mínimos, sin otorgar acceso general a tablas de otros tenants.
+
+**BR-158.** Mantener un inventario de las tablas globales (sin tenant),
+con la justificación de cada una y los permisos mínimos con los que la
+aplicación accede a ellas.
+
+**BR-159.** Verificar al iniciar la API y el worker que la conexión a la
+base de datos no puede saltarse el aislamiento por tenant (no es
+superusuario, no es dueña de las tablas ni puede ignorar las políticas
+de aislamiento) y detener el arranque si no se cumple.
+
 ## 2.3 Autenticación, autorización y sesiones
 
 **BR-016.** Implementar autenticación segura.
@@ -226,6 +241,22 @@ cambios inconsistentes.
 
 **BR-049.** Almacenar referencias a medios y metadatos de forma segura;
 validar tipo y tamaño de archivos.
+
+**BR-160.** Procesar correctamente los eventos del proveedor que lleguen
+desordenados: el historial se ordena por la marca de tiempo del
+proveedor y el estado de un mensaje solo puede avanzar, nunca
+retroceder.
+
+**BR-161.** Deduplicar por el identificador externo de cada mensaje o
+evento, no por petición de webhook, ya que una sola petición puede
+contener varios eventos.
+
+**BR-162.** Serializar el procesamiento de eventos de una misma
+conversación para evitar conversaciones duplicadas o cambios
+inconsistentes, sin bloquear el procesamiento de otras conversaciones.
+
+**BR-163.** Publicar eventos en tiempo real solo después de confirmar la
+transacción que los origina; un cambio revertido nunca debe notificarse.
 
 ## 2.7 Integración con WhatsApp Business Platform
 
@@ -444,6 +475,14 @@ mecanismo equivalente.
 **BR-122.** Gestionar zona horaria por tenant para horarios y
 recordatorios.
 
+**BR-164.** Separar las colas por tipo de trabajo y prioridad, de modo
+que las tareas lentas (IA, automatizaciones, reportes) no retrasen el
+procesamiento de mensajes entrantes ni los envíos.
+
+**BR-165.** Los trabajos encolados deben contener solo identificadores y
+datos mínimos, nunca contenido de mensajes, datos personales ni
+secretos.
+
 ## 2.17 Planes, suscripciones y límites
 
 **BR-123.** Gestionar planes, funcionalidades y límites.
@@ -461,6 +500,10 @@ muestra.
 **BR-128.** Registrar eventos de facturación y pagos mediante un
 proveedor cuando se incorpore el módulo.
 
+**BR-166.** Rechazar en backend las operaciones de módulos no
+habilitados para el tenant por su plan o rubro, tanto en la API como en
+los trabajos en segundo plano.
+
 ## 2.18 Reportes y auditoría
 
 **BR-129.** Generar métricas por tenant y periodo.
@@ -475,6 +518,14 @@ protegida contra modificaciones ordinarias.
 
 **BR-133.** Evitar exponer información personal innecesaria en
 exportaciones.
+
+**BR-167.** Registrar en la bitácora también los eventos de seguridad
+que ocurren sin tenant identificado, como intentos fallidos de inicio
+de sesión o tokens inválidos.
+
+**BR-168.** Verificar automáticamente que la protección de la bitácora
+contra modificaciones sigue aplicada; un despliegue no debe completarse
+si la protección no quedó activa.
 
 ## 2.19 Seguridad
 
@@ -516,6 +567,11 @@ repetición cuando aplique.
 **BR-148.** Implementar monitoreo, alertas y registro de errores sin
 filtrar datos sensibles.
 
+**BR-169.** Obtener la IP del cliente solo de cabeceras fijadas por un
+proxy o balanceador de confianza. El rate limiting no debe poder
+evadirse falsificando cabeceras y debe aplicarse también por cuenta o
+identificador, no solo por IP.
+
 ## 2.20 Pruebas y calidad
 
 **BR-149.** Pruebas unitarias de reglas de negocio.
@@ -535,6 +591,9 @@ automatizaciones.
 **BR-155.** Pruebas end-to-end de flujos críticos.
 
 **BR-156.** Pipeline CI con lint, type-check, pruebas y build.
+
+**BR-170.** Pruebas de eventos desordenados y concurrentes de una misma
+conversación: no deben generar duplicados ni estados que retrocedan.
 
 ------------------------------------------------------------------------
 # 3. Requerimientos no funcionales (Backend)
@@ -748,13 +807,23 @@ que:
 11. Existen pruebas automatizadas para los flujos críticos.
 12. Existe documentación de instalación, configuración, despliegue y
     recuperación.
+13. Eventos desordenados o simultáneos de una misma conversación no
+    generan duplicados ni estados de mensaje que retrocedan.
+14. Ningún flujo previo a conocer el tenant (inicio de sesión, webhooks,
+    invitaciones, recuperación) permite leer datos de otros tenants.
+15. La API y el worker no arrancan si su conexión a la base de datos
+    puede saltarse el aislamiento por tenant.
 
 ------------------------------------------------------------------------
 
 # 9. Decisiones pendientes antes de implementar (Backend)
 
--   Framework definitivo del backend.
--   Estrategia de base de datos multi-tenant.
+-   Framework definitivo del backend. *Propuesta: `chi` + `oapi-codegen`
+    (ver `arquitectura_backend.md`).*
+-   Estrategia de base de datos multi-tenant. *Propuesta: esquema
+    compartido con RLS forzado (ver `arquitectura_backend.md`).*
+-   Proxy o balanceador de confianza que fija la IP del cliente
+    (BR-169).
 -   Proveedor de hosting y almacenamiento.
 -   Modelo de autenticación y sesiones (acordar con frontend).
 -   Tecnología de eventos en tiempo real (WebSocket o SSE).
