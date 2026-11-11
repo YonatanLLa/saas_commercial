@@ -41,8 +41,8 @@ cp .env.example .env
 docker compose -f infra/docker/docker-compose.yml up -d
 ```
 
-- PostgreSQL: `localhost:5432` (dueño `saas`, aplicación `saas_app`)
-- Valkey/Redis: `localhost:6379`
+- PostgreSQL: `localhost:5434` (dueño `saas`, aplicación `saas_app`)
+- Valkey/Redis: `localhost:6380`
 - S3 (SeaweedFS): `http://localhost:8333`
 - Mailpit: `http://localhost:8025`
 

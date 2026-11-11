@@ -49,6 +49,26 @@ paths:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
 
+  /api/v1/system/info:
+    get:
+      tags: [system]
+      operationId: getSystemInfo
+      summary: Información básica y versión de la API REST v1
+      security: []
+      responses:
+        "200":
+          description: Información de la API
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiInfo"
+        "500":
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
 components:
   securitySchemes:
     bearerAuth:
@@ -57,6 +77,23 @@ components:
       bearerFormat: JWT
 
   schemas:
+    ApiInfo:
+      type: object
+      required: [service, version, apiVersion, status]
+      properties:
+        service:
+          type: string
+          example: saas-api
+        version:
+          type: string
+          example: 0.1.0
+        apiVersion:
+          type: string
+          example: v1
+        status:
+          type: string
+          enum: [ok]
+
     HealthStatus:
       type: object
       required: [status]
